@@ -1,15 +1,34 @@
 import http from 'node:http'
+import { randomUUID } from 'node:crypto'
+import { json } from './middlewares/json.js'
+import { Database } from './database.js'
 
-const users = [];
+const database = new Database()
 
-const serve = http.createServer((request, response) => {
-    if(request.method === 'GET' && request.url === '/users') {
-        return response.writeHead(200, {'Content-type': 'application/json'}).end(JSON.stringify(users))
+const serve = http.createServer(async (request, response) => {
+    const { method, url } = request
+
+    await json(request, response)
+
+    if(method === 'GET' && url === '/users') {
+        const users = database.select('users')
+
+        return response.end(JSON.stringify(users))
     }
 
-    if(request.method === 'POST' && request.url === '/users') {
-        users.push({name: 'Bia', email: 'example@email.com'})
-        return response.writeHead(201).end(JSON.stringify(users))
+    if(method === 'POST' && url === '/users') {
+        console.log(request.data)
+        const { name, email } = request.body
+        
+        const user = {
+            id: randomUUID(),
+            name,
+            email,
+        }
+
+        database.insert('users', user)
+
+        return response.writeHead(201).end()
     }
 
     return response.writeHead(404).end()
