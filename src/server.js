@@ -3,24 +3,24 @@ import { json } from './middlewares/json.js'
 import { routes } from './routes.js'
 
 
-const serve = http.createServer(async (request, response) => {
-    const { method, url } = request
+const server = http.createServer(async (req, res) => {
+    const { method, url } = req
 
-    await json(request, response)
+    await json(req, res)
 
     const route = routes.find(route => {
         return route.method === method && route.path.test(url)
     })
 
     if(route) {
-        const routeParams = request.url.match(route.path)
+        const routeParams = req.url.match(route.path)
 
-        request.params = { ...routeParams.groups }
-        return route.handler(request, response)
+        req.params = { ...routeParams.groups }
+        return route.handler(req, res)
     }
 
-    return response.writeHead(404).end()
+    return res.writeHead(404).end()
 
 })
 
-serve.listen(3333)
+server.listen(3333)
